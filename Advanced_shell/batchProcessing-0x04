@@ -1,0 +1,33 @@
+#!/bin/bash
+# Script: batchProcessing-0x04
+# Objective: Fetch Pokémon data in parallel using background processes
+# Pokémon list: Bulbasaur, Ivysaur, Venusaur, Charmander, Charmeleon
+
+POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+OUTPUT_DIR="pokemon_data"
+ERROR_FILE="errors.txt"
+
+# Ensure output directory exists
+mkdir -p "$OUTPUT_DIR"
+
+# Clear previous error log
+> "$ERROR_FILE"
+
+for pokemon in "${POKEMONS[@]}"; do
+    echo "Fetching data for $pokemon..."
+    (
+        RESPONSE=$(curl -s -w "%{http_code}" -o "$OUTPUT_DIR/$pokemon.json" "https://pokeapi.co/api/v2/pokemon/$pokemon")
+
+        if [ "$RESPONSE" -eq 200 ]; then
+            echo "Saved data to $OUTPUT_DIR/$pokemon.json ✅"
+        else
+            echo "Error: Failed to fetch data for $pokemon (status $RESPONSE)" >> "$ERROR_FILE"
+            rm -f "$OUTPUT_DIR/$pokemon.json"
+        fi
+    ) &
+done
+
+# Wait for all background processes to complete
+wait
+
+echo "All parallel fetches completed."
