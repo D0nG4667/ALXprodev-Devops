@@ -1,25 +1,37 @@
 #!/bin/bash
 # Script: batchProcessing-0x02
-# Objective: Retrieve data for multiple Pokémon and save to separate files
+# Objective: Retrieve data for multiple Pokémon with retry logic
 # Pokémon list: Bulbasaur, Ivysaur, Venusaur, Charmander, Charmeleon
 
 POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 OUTPUT_DIR="pokemon_data"
+ERROR_FILE="errors.txt"
 
 # Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
 
 for pokemon in "${POKEMONS[@]}"; do
     echo "Fetching data for $pokemon..."
-    RESPONSE=$(curl -s -w "%{http_code}" -o "$OUTPUT_DIR/$pokemon.json" "https://pokeapi.co/api/v2/pokemon/$pokemon")
 
-    if [ "$RESPONSE" -eq 200 ]; then
-        echo "Saved data to $OUTPUT_DIR/$pokemon.json ✅"
-    else
-        echo "Error: Failed to fetch data for $pokemon (status $RESPONSE)" >> errors.txt
+    success=false
+    for attempt in {1..3}; do
+        RESPONSE=$(curl -s -w "%{http_code}" -o "$OUTPUT_DIR/$pokemon.json" "https://pokeapi.co/api/v2/pokemon/$pokemon")
+
+        if [ "$RESPONSE" -eq 200 ]; then
+            echo "Saved data to $OUTPUT_DIR/$pokemon.json ✅"
+            success=true
+            break
+        else
+            echo "Attempt $attempt failed for $pokemon (status $RESPONSE)"
+            sleep 2  # wait before retry
+        fi
+    done
+
+    if [ "$success" = false ]; then
+        echo "Error: Failed to fetch data for $pokemon after 3 attempts" >> "$ERROR_FILE"
         rm -f "$OUTPUT_DIR/$pokemon.json"
     fi
 
-    # Delay to handle potential rate-limiting
+    # Delay between Pokémon requests to avoid rate-limiting
     sleep 2
 done
