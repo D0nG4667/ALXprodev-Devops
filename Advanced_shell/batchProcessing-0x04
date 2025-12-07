@@ -9,10 +9,9 @@ ERROR_FILE="errors.txt"
 
 # Ensure output directory exists
 mkdir -p "$OUTPUT_DIR"
-
-# Clear previous error log
 > "$ERROR_FILE"
 
+# Launch background jobs
 for pokemon in "${POKEMONS[@]}"; do
     echo "Fetching data for $pokemon..."
     (
@@ -27,7 +26,14 @@ for pokemon in "${POKEMONS[@]}"; do
     ) &
 done
 
-# Wait for all background processes to complete
+# Show running jobs
+echo "Background jobs running:"
+jobs
+
+# Wait for all background jobs to finish
 wait
+
+# Clean up any leftover jobs (safety)
+kill $(jobs -p) 2>/dev/null
 
 echo "All parallel fetches completed."
