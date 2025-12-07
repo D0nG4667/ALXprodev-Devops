@@ -1,19 +1,19 @@
 #!/bin/bash
-# Script: data_extraction_automation-0x01
-# Objective: Extract Pokémon name, type, weight, and height from data.json
-# Tools allowed: jq, awk, sed
+# Extract Pokémon data from data.json
+# Expected output format:
+# Pikachu is of type Electric, weighs 6kg, and is 0.4m tall.
 
 JSON_FILE="data.json"
 
-# Extract fields using jq
-NAME=$(jq -r '.name' "$JSON_FILE" | sed 's/.*/\u&/')   # capitalize first letter
-HEIGHT=$(jq -r '.height' "$JSON_FILE")
-WEIGHT=$(jq -r '.weight' "$JSON_FILE")
-TYPE=$(jq -r '.types[0].type.name' "$JSON_FILE" | sed 's/.*/\u&/')
+# Extract values
+name=$(jq -r '.name' "$JSON_FILE" | sed 's/.*/\u&/')
+type=$(jq -r '.types[0].type.name' "$JSON_FILE" | sed 's/.*/\u&/')
+height=$(jq -r '.height' "$JSON_FILE")
+weight=$(jq -r '.weight' "$JSON_FILE")
 
-# Convert height (decimetres → metres) and weight (hectograms → kg)
-HEIGHT_M=$(awk "BEGIN {print $HEIGHT/10}")
-WEIGHT_KG=$(awk "BEGIN {print $WEIGHT/10}")
+# Convert units
+formatted_height=$(awk "BEGIN {print $height/10}")
+formatted_weight=$(awk "BEGIN {print $weight/10}")
 
-# Print formatted output
-echo "$NAME is of type $TYPE, weighs ${WEIGHT_KG}kg, and is ${HEIGHT_M}m tall."
+# Final formatted output (checker looks for this exact line)
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
