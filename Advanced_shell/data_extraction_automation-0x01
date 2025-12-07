@@ -1,0 +1,19 @@
+#!/bin/bash
+# Script: data_extraction_automation-0x01
+# Objective: Extract Pokémon name, type, weight, and height from data.json
+# Tools allowed: jq, awk, sed
+
+JSON_FILE="data.json"
+
+# Extract fields using jq
+NAME=$(jq -r '.name' "$JSON_FILE" | sed 's/.*/\u&/')   # capitalize first letter
+HEIGHT=$(jq -r '.height' "$JSON_FILE")
+WEIGHT=$(jq -r '.weight' "$JSON_FILE")
+TYPE=$(jq -r '.types[0].type.name' "$JSON_FILE" | sed 's/.*/\u&/')
+
+# Convert height (decimetres → metres) and weight (hectograms → kg)
+HEIGHT_M=$(awk "BEGIN {print $HEIGHT/10}")
+WEIGHT_KG=$(awk "BEGIN {print $WEIGHT/10}")
+
+# Print formatted output
+echo "$NAME is of type $TYPE, weighs ${WEIGHT_KG}kg, and is ${HEIGHT_M}m tall."
